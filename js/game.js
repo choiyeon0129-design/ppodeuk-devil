@@ -59,6 +59,8 @@ class Game {
     this.assets.item1 = await loadImage('item_1.png');  // 낙하 장애물
     this.assets.item2 = await loadImage('item_2.png');  // 박쥐
     this.assets.thumb = await loadImage('thumnail.png'); // 타이틀 배경
+    this.assets.titleLogo = await loadImage('title.png'); // 타이틀 로고("뽀득뽀득")
+    this.assets.button = await loadImage('button.png');   // 시작 버튼 배경
     this.assets.brush = await loadImage('item_brush.png'); // 빗자루(모든 브러시 공용)
     this.assets.brush2 = this.assets.brush;                // 타이틀도 동일 리소스
   }
@@ -95,7 +97,11 @@ class Game {
 
   run() {
     this.resize();
-    window.addEventListener('resize', () => this.resize());
+    // 브라우저/화면 크기 변화에 항상 맞춤 (리사이즈·회전·모바일 주소창 변화 포함)
+    const onResize = () => this.resize();
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
     const loop = (ts) => {
       if (!this._last) this._last = ts;
       let dt = (ts - this._last) / 1000;
@@ -318,14 +324,12 @@ class Game {
     ctx.fillStyle = 'rgba(10,8,18,0.35)'; // 가독성용 살짝 어둡게
     ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
 
-    // 타이틀 텍스트 "뽀득뽀득" (색 #560072, 어두운 보라라 밝은 외곽선으로 가독성 확보)
+    // 타이틀 로고 (title 리소스) — 기존 "뽀득뽀득" 텍스트 자리
     ctx.textAlign = 'center';
-    ctx.font = `800 92px ${FONT}`;
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 13; ctx.strokeStyle = 'rgba(248,244,255,0.92)';
-    ctx.strokeText('뽀득뽀득', CONFIG.WIDTH / 2, 300);
-    ctx.fillStyle = '#560072';
-    ctx.fillText('뽀득뽀득', CONFIG.WIDTH / 2, 300);
+    if (this.assets.titleLogo) {
+      const lw = 380, lh = lw * (this.assets.titleLogo.height / this.assets.titleLogo.width);
+      ctx.drawImage(this.assets.titleLogo, CONFIG.WIDTH / 2 - lw / 2, 256 - lh / 2, lw, lh);
+    }
 
     // 캐릭터 — 전체가 둥실 떠다니며 살짝 흔들리는 생동감 애니메이션
     if (this.assets.char) {
@@ -349,27 +353,24 @@ class Game {
       ctx.restore();
     }
 
-    // '시작하기' 버튼 — 색 #560072 (보라) + 글로우
-    const bw = 320, bh = 100, bx = CONFIG.WIDTH / 2 - bw / 2, by = 838;
-    ctx.save();
-    ctx.shadowColor = 'rgba(134,30,176,0.6)'; ctx.shadowBlur = 26;
-    const grad = ctx.createLinearGradient(0, by, 0, by + bh);
-    grad.addColorStop(0, '#6d1190'); grad.addColorStop(1, '#560072');
-    ctx.fillStyle = grad; roundRect(ctx, bx, by, bw, bh, 24); ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = '#2e003d'; ctx.lineWidth = 5; roundRect(ctx, bx, by, bw, bh, 24); ctx.stroke();
-    ctx.strokeStyle = 'rgba(228,196,245,0.5)'; ctx.lineWidth = 2; roundRect(ctx, bx + 4, by + 4, bw - 8, bh - 8, 20); ctx.stroke();
-    ctx.fillStyle = '#ffffff'; ctx.textBaseline = 'middle';
+    // '시작하기' 버튼 — button 리소스 + 문구(#F2EFE6)
+    const bcy = 888;
+    if (this.assets.button) {
+      const uw = 340, uh = uw * (this.assets.button.height / this.assets.button.width);
+      ctx.drawImage(this.assets.button, CONFIG.WIDTH / 2 - uw / 2, bcy - uh / 2, uw, uh);
+    }
+    ctx.textBaseline = 'middle';
     ctx.font = `800 46px ${FONT}`;
-    ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(30,0,42,0.8)';
-    ctx.strokeText('시작하기', CONFIG.WIDTH / 2, by + bh / 2 + 2);
-    ctx.fillText('시작하기', CONFIG.WIDTH / 2, by + bh / 2 + 2);
+    ctx.lineJoin = 'round'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(32,28,22,0.55)';
+    ctx.strokeText('시작하기', CONFIG.WIDTH / 2, bcy + 2);
+    ctx.fillStyle = '#F2EFE6';
+    ctx.fillText('시작하기', CONFIG.WIDTH / 2, bcy + 2);
     ctx.textBaseline = 'alphabetic';
 
     // 버튼 아래 안내 문구
     ctx.font = `500 34px ${FONT}`;
-    ctx.fillStyle = CONFIG.COLOR.text;
-    ctx.fillText('방향키로 유리를 모두 닦으면 성공!', CONFIG.WIDTH / 2, by + bh + 64);
+    ctx.fillStyle = '#F2EFE6';
+    ctx.fillText('스페이스바로 유리를 모두 닦으면 성공!', CONFIG.WIDTH / 2, 1004);
   }
 
   _renderHUD(ctx) {
