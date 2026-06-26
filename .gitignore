@@ -1,0 +1,12 @@
+# OS / 드라이브 메타
+desktop.ini
+**/desktop.ini
+Thumbs.db
+.DS_Store
+
+# 에디터/런처 설정
+.claude/
+
+# 임시 검증 산출물
+_*.b64
+_*.jpg
